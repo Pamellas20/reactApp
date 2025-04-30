@@ -8,6 +8,7 @@ const SearchIcon = () => (
   </svg>
 );
 
+
 const LocationIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
@@ -57,23 +58,30 @@ const SunIcon = () => (
 );
 
 export default function Appr() {
-  const [darkMode, setDarkMode] = useState(false);
+  // Initialize darkMode from localStorage (if available)
+  const [darkMode, setDarkMode] = useState(() => {
+    const savedMode = localStorage.getItem('darkMode');
+    return savedMode ? JSON.parse(savedMode) : false;
+  });
+  
   const [username, setUsername] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Toggle dark mode
+  // Toggle dark mode and save preference to localStorage
   const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    localStorage.setItem('darkMode', JSON.stringify(newMode));
   };
 
   // Handle search form submission
   const handleSubmit = (e) => {
     e.preventDefault();
     if (username.trim()) {
-      setSearchQuery(username);
+      setSearchQuery(username.trim());
     }
   };
 
@@ -86,7 +94,9 @@ export default function Appr() {
       setError(null);
 
       try {
-        const response = await fetch(`https://api.github.com/users/${searchQuery}`);
+        // Encode the username to handle spaces properly
+        const encodedUsername = encodeURIComponent(searchQuery);
+        const response = await fetch(`https://api.github.com/users/${encodedUsername}`);
         
         if (!response.ok) {
           throw new Error("User not found");
@@ -112,6 +122,15 @@ export default function Appr() {
     const date = new Date(dateString);
     return `Joined ${date.getDate()} ${date.toLocaleString('default', { month: 'short' })} ${date.getFullYear()}`;
   };
+
+  // Apply dark mode effect to document body
+  useEffect(() => {
+    if (darkMode) {
+      document.body.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
+    }
+  }, [darkMode]);
 
   return (
     <div className={`min-h-screen transition-colors ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'}`}>
@@ -180,8 +199,6 @@ export default function Appr() {
                   src={userData.avatar_url}
                   alt={`${userData.login}'s avatar`}
                   className="w-20 h-20 sm:w-40 sm:h-40 rounded-full"
-
-
                 />
               </div>
 
